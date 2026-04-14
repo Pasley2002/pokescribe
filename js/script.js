@@ -1,6 +1,6 @@
 /**
- * POKESCRIBE v1.8 - Deep Formes Update
- * Soporte masivo: Ursaluna, Arceus, Silvally, Squawkabilly, Floette, Tatsugiri y más.
+ * POKESCRIBE v1.9 - Nickname Update
+ * Soporte para motes personalizados: Nickname (Species) @ Item
  */
 
 function convertTeam() {
@@ -40,7 +40,8 @@ function parsePokemon(block) {
         species: '', item: '', ability: '', tera: '', nature: '',
         evs: {hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0}, 
         ivs: {hp:31, atk:31, def:31, spa:31, spd:31, spe:31}, 
-        moves: [], gender: '', formParam: '', isShiny: false
+        moves: [], gender: '', formParam: '', isShiny: false,
+        nickname: '' // <-- Nueva propiedad para el mote
     };
 
     const cleanID = (str) => str.toLowerCase().trim().replace(/ /g, '').replace(/[^a-z0-9]/g, '');
@@ -52,39 +53,28 @@ function parsePokemon(block) {
         if (i === 0) {
             const parts = line.split(' @ ');
             data.item = parts[1] ? parts[1].trim() : '';
-            let namePart = parts[0];
+            let namePart = parts[0].trim();
 
-            if (namePart.includes('(M)')) { data.gender = 'male'; namePart = namePart.replace('(M)', ''); }
-            else if (namePart.includes('(F)')) { data.gender = 'female'; namePart = namePart.replace('(F)', ''); }
+            // 1. Manejo de géneros
+            if (namePart.includes('(M)')) { data.gender = 'male'; namePart = namePart.replace('(M)', '').trim(); }
+            else if (namePart.includes('(F)')) { data.gender = 'female'; namePart = namePart.replace('(F)', '').trim(); }
             
-            const match = namePart.match(/\(([^)]+)\)/);
-            data.species = match ? match[1].trim() : namePart.trim();
+            // 2. Detección de Mote: Formato "Mote (Especie)"
+            const nicknameMatch = namePart.match(/(.+?)\s*\(([^)]+)\)/);
+            if (nicknameMatch) {
+                data.nickname = nicknameMatch[1].trim(); // Lo que está fuera de los paréntesis
+                data.species = nicknameMatch[2].trim();  // Lo que está dentro de los paréntesis
+            } else {
+                data.species = namePart; // No hay mote, el nombre es la especie
+                data.nickname = '';
+            }
 
             let lowSpec = data.species.toLowerCase();
 
-            // --- LÓGICA DE FORMAS AVANZADAS ---
-
-            // 1. Ursaluna (Bloodmoon)
-            if (lowSpec === 'ursaluna-bloodmoon') {
-                data.formParam += ' bloodmoon=true';
-                data.species = 'ursaluna';
-            }
-
-            // 2. Arceus (Multitype)
-            else if (lowSpec.startsWith('arceus-')) {
-                const type = lowSpec.split('-')[1];
-                data.formParam += ` multitype=${type}`;
-                data.species = 'arceus';
-            }
-
-            // 3. Silvally (RKS Memory)
-            else if (lowSpec.startsWith('silvally-')) {
-                const type = lowSpec.split('-')[1];
-                data.formParam += ` rks_memory=${type}`;
-                data.species = 'silvally';
-            }
-
-            // 4. Squawkabilly (Colors)
+            // --- LÓGICA DE FORMAS ---
+            if (lowSpec === 'ursaluna-bloodmoon') { data.formParam += ' bloodmoon=true'; data.species = 'ursaluna'; }
+            else if (lowSpec.startsWith('arceus-')) { data.formParam += ` multitype=${lowSpec.split('-')[1]}`; data.species = 'arceus'; }
+            else if (lowSpec.startsWith('silvally-')) { data.formParam += ` rks_memory=${lowSpec.split('-')[1]}`; data.species = 'silvally'; }
             else if (lowSpec.includes('squawkabilly')) {
                 if (lowSpec.includes('-blue')) data.formParam += ' squawkabilly_color=blue';
                 else if (lowSpec.includes('-white')) data.formParam += ' squawkabilly_color=gray';
@@ -92,51 +82,31 @@ function parsePokemon(block) {
                 else data.formParam += ' squawkabilly_color=green';
                 data.species = 'squawkabilly';
             }
-
-            // 5. Floette (Eternal)
-            else if (lowSpec.includes('floette')) {
-                if (lowSpec.includes('-eternal')) data.formParam += ' flower=eternal';
-                data.species = 'floette';
-            }
-
-            // 6. Tatsugiri (Textures)
+            else if (lowSpec.includes('floette-eternal')) { data.formParam += ' flower=eternal'; data.species = 'floette'; }
             else if (lowSpec.includes('tatsugiri')) {
                 if (lowSpec.includes('-droopy')) data.formParam += ' tatsugiri_texture=droopy';
                 else if (lowSpec.includes('-stretchy')) data.formParam += ' tatsugiri_texture=stretchy';
                 else data.formParam += ' tatsugiri_texture=curly';
                 data.species = 'tatsugiri';
             }
-
-            // 7. Rotom (Appliance)
             else if (lowSpec.startsWith('rotom-')) {
                 const appliances = ['fan', 'frost', 'heat', 'mow', 'wash'];
                 appliances.forEach(a => { if (lowSpec.includes(a)) data.formParam += ` appliance=${a}`; });
                 data.species = 'rotom';
             }
-
-            // 8. Deoxys (Meteorite Forme)
             else if (lowSpec.startsWith('deoxys-')) {
                 const dForms = { 'attack': 'attack', 'defense': 'defence', 'speed': 'speed' };
                 for (let f in dForms) { if (lowSpec.includes(f)) data.formParam += ` meteorite_forme=${dForms[f]}`; }
                 data.species = 'deoxys';
             }
-
-            // 9. Shaymin (Gracidea Forme)
-            else if (lowSpec === 'shaymin-sky') {
-                data.formParam += ' gracidea_forme=sky';
-                data.species = 'shaymin';
-            } else if (lowSpec === 'shaymin') {
-                data.formParam += ' gracidea_forme=land';
-            }
-
-            // 10. Genios (Mirror Forme)
+            else if (lowSpec === 'shaymin-sky') { data.formParam += ' gracidea_forme=sky'; data.species = 'shaymin'; }
+            else if (lowSpec === 'shaymin') { data.formParam += ' gracidea_forme=land'; }
+            
             const genies = ['landorus', 'tornadus', 'thundurus', 'enamorus'];
             if (genies.some(g => lowSpec.startsWith(g))) {
                 data.formParam += lowSpec.includes('-therian') ? ' mirror_forme=therian' : ' mirror_forme=incarnate';
                 data.species = lowSpec.split('-')[0];
             }
-
-            // 11. Fusiones y otros (Kyurem, Necrozma, Hoopa, Oricorio, Calyrex, Urshifu)
             else if (lowSpec.includes('kyurem-')) {
                 if (lowSpec.includes('black')) data.formParam += ' absofusion=black';
                 if (lowSpec.includes('white')) data.formParam += ' absofusion=white';
@@ -168,13 +138,9 @@ function parsePokemon(block) {
                 data.species = 'urshifu';
             }
 
-            // Corrección de especies con género (-F/-M)
             const genderedSuffixMons = ['indeedee', 'basculegion', 'oinkologne', 'meowstic'];
-            if (genderedSuffixMons.some(s => lowSpec.startsWith(s))) {
-                data.species = data.species.split('-')[0];
-            }
+            if (genderedSuffixMons.some(s => lowSpec.startsWith(s))) { data.species = data.species.split('-')[0]; }
 
-            // Gastrodon y Tauros Paldea
             if (data.species.toLowerCase().includes('gastrodon')) {
                 data.formParam += data.species.toLowerCase().includes('east') ? ' sea=east' : ' sea=west';
                 data.species = 'gastrodon';
@@ -186,7 +152,6 @@ function parsePokemon(block) {
                 data.species = 'tauros';
             }
 
-            // Regiones (Kazeran incluido)
             const regions = { 'Alola': 'alolan', 'Galar': 'galarian', 'Paldea': 'paldean', 'Hisui': 'hisuian', 'Kazeran': 'kazeran' };
             for (let r in regions) {
                 if (data.species.includes('-' + r)) {
@@ -254,7 +219,10 @@ function renderPokemon(data, slot, container) {
     const evClass = totalEVs > 510 ? 'ev-error' : 'ev-ok';
     const evText = totalEVs > 510 ? `⚠️ ERROR: ${totalEVs}/510 EVs` : `EVs: ${totalEVs}/510`;
 
-    const giveCmd = `/pokegive ${finalSpecies} lvl=100${finalItem}${data.gender ? ' gender='+data.gender : ''} ability=${finalAbility}${data.tera ? ' tera_type='+toJoin(data.tera) : ''}${ivString}${evString} nature=${toJoin(data.nature)}${data.formParam}${data.isShiny ? ' shiny=true' : ''}`;
+    // AGREGAMOS EL PARÁMETRO NICKNAME
+    const nicknameParam = data.nickname ? ` nickname="${data.nickname}"` : '';
+
+    const giveCmd = `/pokegive ${finalSpecies} lvl=100${finalItem}${data.gender ? ' gender='+data.gender : ''} ability=${finalAbility}${data.tera ? ' tera_type='+toJoin(data.tera) : ''}${ivString}${evString} nature=${toJoin(data.nature)}${data.formParam}${data.isShiny ? ' shiny=true' : ''}${nicknameParam}`;
     const editCmd = `/pokeedit ${slot} moves=${data.moves.join(',')}`;
 
     const card = document.createElement('div');
