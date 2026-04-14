@@ -1,6 +1,6 @@
 /**
- * POKESCRIBE v1.7 - Legendary Forms Update
- * Soporte masivo para formas: Rotom, Deoxys, Genios, Fusiones y más.
+ * POKESCRIBE v1.8 - Deep Formes Update
+ * Soporte masivo: Ursaluna, Arceus, Silvally, Squawkabilly, Floette, Tatsugiri y más.
  */
 
 function convertTeam() {
@@ -62,51 +62,95 @@ function parsePokemon(block) {
 
             let lowSpec = data.species.toLowerCase();
 
-            // --- LÓGICA DE FORMAS ESPECIALES COBBLEMON ---
+            // --- LÓGICA DE FORMAS AVANZADAS ---
 
-            // 1. Rotom (Appliance)
-            if (lowSpec.startsWith('rotom-')) {
+            // 1. Ursaluna (Bloodmoon)
+            if (lowSpec === 'ursaluna-bloodmoon') {
+                data.formParam += ' bloodmoon=true';
+                data.species = 'ursaluna';
+            }
+
+            // 2. Arceus (Multitype)
+            else if (lowSpec.startsWith('arceus-')) {
+                const type = lowSpec.split('-')[1];
+                data.formParam += ` multitype=${type}`;
+                data.species = 'arceus';
+            }
+
+            // 3. Silvally (RKS Memory)
+            else if (lowSpec.startsWith('silvally-')) {
+                const type = lowSpec.split('-')[1];
+                data.formParam += ` rks_memory=${type}`;
+                data.species = 'silvally';
+            }
+
+            // 4. Squawkabilly (Colors)
+            else if (lowSpec.includes('squawkabilly')) {
+                if (lowSpec.includes('-blue')) data.formParam += ' squawkabilly_color=blue';
+                else if (lowSpec.includes('-white')) data.formParam += ' squawkabilly_color=gray';
+                else if (lowSpec.includes('-yellow')) data.formParam += ' squawkabilly_color=yellow';
+                else data.formParam += ' squawkabilly_color=green';
+                data.species = 'squawkabilly';
+            }
+
+            // 5. Floette (Eternal)
+            else if (lowSpec.includes('floette')) {
+                if (lowSpec.includes('-eternal')) data.formParam += ' flower=eternal';
+                data.species = 'floette';
+            }
+
+            // 6. Tatsugiri (Textures)
+            else if (lowSpec.includes('tatsugiri')) {
+                if (lowSpec.includes('-droopy')) data.formParam += ' tatsugiri_texture=droopy';
+                else if (lowSpec.includes('-stretchy')) data.formParam += ' tatsugiri_texture=stretchy';
+                else data.formParam += ' tatsugiri_texture=curly';
+                data.species = 'tatsugiri';
+            }
+
+            // 7. Rotom (Appliance)
+            else if (lowSpec.startsWith('rotom-')) {
                 const appliances = ['fan', 'frost', 'heat', 'mow', 'wash'];
                 appliances.forEach(a => { if (lowSpec.includes(a)) data.formParam += ` appliance=${a}`; });
                 data.species = 'rotom';
             }
-            // 2. Deoxys (Meteorite Forme)
+
+            // 8. Deoxys (Meteorite Forme)
             else if (lowSpec.startsWith('deoxys-')) {
-                const dForms = { 'attack': 'attack', 'defense': 'defense', 'speed': 'speed' };
+                const dForms = { 'attack': 'attack', 'defense': 'defence', 'speed': 'speed' };
                 for (let f in dForms) { if (lowSpec.includes(f)) data.formParam += ` meteorite_forme=${dForms[f]}`; }
                 data.species = 'deoxys';
             }
-            // 3. Shaymin (Gracidea Forme)
+
+            // 9. Shaymin (Gracidea Forme)
             else if (lowSpec === 'shaymin-sky') {
                 data.formParam += ' gracidea_forme=sky';
                 data.species = 'shaymin';
             } else if (lowSpec === 'shaymin') {
                 data.formParam += ' gracidea_forme=land';
             }
-            // 4. Genios: Landorus, Tornadus, Thundurus, Enamorus (Mirror Forme)
+
+            // 10. Genios (Mirror Forme)
             const genies = ['landorus', 'tornadus', 'thundurus', 'enamorus'];
             if (genies.some(g => lowSpec.startsWith(g))) {
                 data.formParam += lowSpec.includes('-therian') ? ' mirror_forme=therian' : ' mirror_forme=incarnate';
                 data.species = lowSpec.split('-')[0];
             }
-            // 5. Kyurem (Absofusion)
+
+            // 11. Fusiones y otros (Kyurem, Necrozma, Hoopa, Oricorio, Calyrex, Urshifu)
             else if (lowSpec.includes('kyurem-')) {
                 if (lowSpec.includes('black')) data.formParam += ' absofusion=black';
                 if (lowSpec.includes('white')) data.formParam += ' absofusion=white';
                 data.species = 'kyurem';
             }
-            // 6. Necrozma (Prism Fusion)
             else if (lowSpec.includes('necrozma-')) {
                 if (lowSpec.includes('dawn')) data.formParam += ' prism_fusion=dawn';
                 if (lowSpec.includes('dusk')) data.formParam += ' prism_fusion=dusk';
                 data.species = 'necrozma';
             }
-            // 7. Hoopa (Djinn State)
             else if (lowSpec.includes('hoopa')) {
                 data.formParam += lowSpec.includes('unbound') ? ' djinn_state=unbound' : ' djinn_state=confined';
                 data.species = 'hoopa';
             }
-            // 8. Oricorio (Dance Style)
             else if (lowSpec.includes('oricorio')) {
                 if (lowSpec.includes('pau')) data.formParam += ' dance_style=pau';
                 else if (lowSpec.includes('pom-pom')) data.formParam += ' dance_style=pom-pom';
@@ -114,13 +158,11 @@ function parsePokemon(block) {
                 else data.formParam += ' dance_style=baile';
                 data.species = 'oricorio';
             }
-            // 9. Calyrex (King Steed)
             else if (lowSpec.includes('calyrex-')) {
                 if (lowSpec.includes('ice')) data.formParam += ' king_steed=ice';
                 if (lowSpec.includes('shadow')) data.formParam += ' king_steed=shadow';
                 data.species = 'calyrex';
             }
-            // 10. Urshifu (Wushu Style)
             else if (lowSpec.includes('urshifu')) {
                 data.formParam += lowSpec.includes('rapid-strike') ? ' wushu_style=rapid_strike' : ' wushu_style=single_strike';
                 data.species = 'urshifu';
