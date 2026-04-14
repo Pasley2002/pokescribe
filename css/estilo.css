@@ -116,3 +116,23 @@ textarea {
 .ev-counter { font-size: 0.75rem; margin-top: 10px; font-weight: bold; display: inline-block; padding: 4px 8px; border-radius: 4px; background: #333; }
 .ev-ok { color: var(--success); }
 .ev-error { color: white; background: var(--danger); }
+
+/* --- FOOTER --- */
+.main-footer {
+    margin-top: 40px;
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    opacity: 0.7; /* Para que no distraiga tanto como el contenido principal */
+}
+
+.main-footer strong {
+    color: var(--primary);
+}
+
+.sub-footer {
+    font-size: 0.8rem;
+    margin-top: 8px;
+    color: var(--text-muted);
+}
