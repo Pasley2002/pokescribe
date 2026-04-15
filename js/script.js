@@ -1,15 +1,69 @@
 /**
- * POKESCRIBE v2.0 - Final Prefix & Formes Update
- * Versión estable con corrección de prefijos (Orbes de estado en Cobblemon)
- * y soporte total para formas legendarias y motes.
+ * POKESCRIBE v2.1 - Bugfix Placeholder
+ * Soporte bilingüe completo + Corrección de prefijos y formas.
  */
+
+let currentLang = 'es';
+
+const translations = {
+    es: {
+        subtitle: "Convierte sets de Showdown a comandos de Cobblemon ✨",
+        placeholder: "Pega aquí tu equipo de Showdown...",
+        btnGenerate: "GENERAR EQUIPO",
+        btnClear: "LIMPIAR",
+        emptyError: "El campo está vacío. Pega un set de Showdown.",
+        noValid: "No se detectó ningún Pokémon válido. Revisa el formato.",
+        labelGive: "Comando Give (Aparecer)",
+        labelEdit: "Comando Edit (Movimientos)",
+        evError: "⚠️ ERROR: {evs}/510 EVs",
+        footer: "Creado por <strong>PasleyStone</strong> para la comunidad de <strong>Orizon 🌌</strong>",
+        subFooter: "Optimizado para Cobblemon v2.2+"
+    },
+    en: {
+        subtitle: "Convert Showdown sets to Cobblemon commands ✨",
+        placeholder: "Paste your Showdown team here...",
+        btnGenerate: "GENERATE TEAM",
+        btnClear: "CLEAR",
+        emptyError: "Field is empty. Paste a Showdown set.",
+        noValid: "No valid Pokemon detected. Check the format.",
+        labelGive: "Give Command (Spawn)",
+        labelEdit: "Edit Command (Moves)",
+        evError: "⚠️ ERROR: {evs}/510 EVs",
+        footer: "Created by <strong>PasleyStone</strong> for the <strong>Orizon</strong> community 🌌",
+        subFooter: "Optimized for Cobblemon v2.2+"
+    }
+};
+
+function toggleLanguage() {
+    currentLang = currentLang === 'es' ? 'en' : 'es';
+    document.getElementById('langBtn').innerText = currentLang === 'es' ? 'EN' : 'ES';
+    
+    // Definimos 't' para que el código sepa de dónde sacar los textos
+    const t = translations[currentLang];
+
+    // Actualizar textos estáticos
+    document.querySelector('[data-t="subtitle"]').innerText = t.subtitle;
+    document.querySelector('[data-t="btnGenerate"]').innerText = t.btnGenerate;
+    document.querySelector('[data-t="btnClear"]').innerText = t.btnClear;
+    document.querySelector('.main-footer p').innerHTML = t.footer;
+    document.querySelector('[data-t="subFooter"]').innerText = t.subFooter;
+    
+    // Actualizar el placeholder del cuadro de texto
+    document.getElementById('input').placeholder = t.placeholder;
+
+    // Si ya hay algo generado, lo volvemos a generar para traducir las etiquetas de los resultados
+    if (document.getElementById('output').innerHTML !== '') {
+        convertTeam();
+    }
+}
 
 function convertTeam() {
     const rawInput = document.getElementById('input').value.trim();
     const outputDiv = document.getElementById('output');
+    const t = translations[currentLang];
     
     if (!rawInput) {
-        outputDiv.innerHTML = '<div class="poke-card" style="border-left-color:var(--danger); text-align:center;"><p style="color:var(--text); font-weight:bold;">El campo está vacío. Pega un set de Showdown.</p></div>';
+        outputDiv.innerHTML = `<div class="poke-card" style="border-left-color:var(--danger); text-align:center;"><p style="color:var(--text); font-weight:bold;">${t.emptyError}</p></div>`;
         return;
     }
 
@@ -26,7 +80,7 @@ function convertTeam() {
     });
 
     if (!foundAny) {
-        outputDiv.innerHTML = '<div class="poke-card" style="border-left-color:var(--danger); text-align:center;"><p style="color:var(--text); font-weight:bold;">No se detectó ningún Pokémon válido. Revisa el formato.</p></div>';
+        outputDiv.innerHTML = `<div class="poke-card" style="border-left-color:var(--danger); text-align:center;"><p style="color:var(--text); font-weight:bold;">${t.noValid}</p></div>`;
     }
 }
 
@@ -190,16 +244,13 @@ function parsePokemon(block) {
 function renderPokemon(data, slot, container) {
     const toJoin = (str) => str.toLowerCase().trim().replace(/[^a-z0-9]/g, ''); 
     const toSnake = (str) => str.toLowerCase().trim().replace(/[ -]/g, '_').replace(/[^a-z0-9_]/g, '');
+    const t = translations[currentLang];
 
-    // --- LÓGICA DE PREFIJOS ---
     const itemName = data.item.toLowerCase();
     let prefix = 'cobblemon:';
     
-    // Keywords de Mega Showdown
     const megaKeywords = ['ite', 'crystal', 'meteorite', ' z', '_z'];
     const isMegaShowdownCandidate = megaKeywords.some(k => itemName.includes(k)) || (itemName.includes('orb') && !['life orb', 'toxic orb', 'flame orb', 'adrenaline orb'].includes(itemName));
-    
-    // Lista de excepciones de Cobblemon (Items que NO son de Mega Showdown)
     const cobblemonExceptions = ['eviolite', 'life orb', 'toxic orb', 'flame orb', 'adrenaline orb'];
     
     if (isMegaShowdownCandidate && !cobblemonExceptions.includes(itemName) && itemName !== '') {
@@ -223,7 +274,7 @@ function renderPokemon(data, slot, container) {
     for (let key in data.evs) { if (data.evs[key] > 0) { evString += ` ${evMap[key]}=${data.evs[key]}`; totalEVs += data.evs[key]; } }
 
     const evClass = totalEVs > 510 ? 'ev-error' : 'ev-ok';
-    const evText = totalEVs > 510 ? `⚠️ ERROR: ${totalEVs}/510 EVs` : `EVs: ${totalEVs}/510`;
+    const evText = totalEVs > 510 ? t.evError.replace('{evs}', totalEVs) : `EVs: ${totalEVs}/510`;
 
     const nicknameParam = data.nickname ? ` nickname="${data.nickname}"` : '';
 
@@ -237,12 +288,12 @@ function renderPokemon(data, slot, container) {
         <span class="ev-counter ${evClass}">${evText}</span>
         
         <div class="command-wrap" style="margin-top:15px">
-            <span class="label">Comando Give (Aparecer)</span>
+            <span class="label">${t.labelGive}</span>
             <span class="cmd-text" id="give-${slot}">${giveCmd}</span>
             <button class="copy-btn" onclick="copyText('give-${slot}', this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
         </div>
         <div class="command-wrap">
-            <span class="label">Comando Edit (Movimientos)</span>
+            <span class="label">${t.labelEdit}</span>
             <span class="cmd-text" id="edit-${slot}">${editCmd}</span>
             <button class="copy-btn" onclick="copyText('edit-${slot}', this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
         </div>
