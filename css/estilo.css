@@ -136,3 +136,25 @@ textarea {
     margin-top: 8px;
     color: var(--text-muted);
 }
+
+.lang-switcher {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+#langBtn {
+    background: var(--card-bg);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+#langBtn:hover {
+    background: var(--primary);
+    color: #000;
+}
