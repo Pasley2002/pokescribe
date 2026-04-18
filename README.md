@@ -15,6 +15,7 @@
   - Items: snake_case format (`heavy_duty_boots`).
 * **Shiny Support:** Automatic detection of shiny sets ✨.
 * **Multilingual UI:** Support for both English and Spanish.
+* **Link Integration:** Support for direct links from pokepast.es.
 
 ### 🚀 How to use:
 1. Paste your Showdown set into the text box.
@@ -35,6 +36,7 @@
   - Objetos: Formato snake_case (`heavy_duty_boots`).
 * **Soporte Shiny:** Detección automática de sets variocolor ✨.
 * **Interfaz Bilingüe:** Soporte para Inglés y Español.
+* **Link Integración:** Soporte para links directos de pokepast.es.
 
 ### 🚀 Cómo usar:
 1. Pega tu set de Showdown en el cuadro de texto.
