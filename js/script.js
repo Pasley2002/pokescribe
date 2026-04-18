@@ -1,6 +1,6 @@
 /**
- * POKESCRIBE v2.1 - Bugfix Placeholder
- * Soporte bilingüe completo + Corrección de prefijos y formas.
+ * POKESCRIBE v2.2 - Link Reader Fix
+ * Corregido el error de lectura de links usando un proxy más estable.
  */
 
 let currentLang = 'es';
@@ -8,63 +8,85 @@ let currentLang = 'es';
 const translations = {
     es: {
         subtitle: "Convierte sets de Showdown a comandos de Cobblemon ✨",
-        placeholder: "Pega aquí tu equipo de Showdown...",
+        placeholder: "Pega aquí tu equipo de Showdown o un link de PokéPaste...",
         btnGenerate: "GENERAR EQUIPO",
         btnClear: "LIMPIAR",
-        emptyError: "El campo está vacío. Pega un set de Showdown.",
+        emptyError: "El campo está vacío. Pega un set o un link.",
         noValid: "No se detectó ningún Pokémon válido. Revisa el formato.",
         labelGive: "Comando Give (Aparecer)",
         labelEdit: "Comando Edit (Movimientos)",
         evError: "⚠️ ERROR: {evs}/510 EVs",
+        loading: "Leyendo link de PokéPaste... 🌐",
+        linkError: "Error al leer el link. Asegúrate de que sea público.",
         footer: "Creado por <strong>PasleyStone</strong> para la comunidad de <strong>Orizon 🌌</strong>",
-        subFooter: "Optimizado para Cobblemon v2.2+"
+        subFooter: "Optimizado para Cobblemon v2.1+"
     },
     en: {
         subtitle: "Convert Showdown sets to Cobblemon commands ✨",
-        placeholder: "Paste your Showdown team here...",
+        placeholder: "Paste your Showdown team or a PokéPaste link here...",
         btnGenerate: "GENERATE TEAM",
         btnClear: "CLEAR",
-        emptyError: "Field is empty. Paste a Showdown set.",
+        emptyError: "Field is empty. Paste a set or a link.",
         noValid: "No valid Pokemon detected. Check the format.",
         labelGive: "Give Command (Spawn)",
         labelEdit: "Edit Command (Moves)",
         evError: "⚠️ ERROR: {evs}/510 EVs",
+        loading: "Reading PokéPaste link... 🌐",
+        linkError: "Error reading the link. Make sure it is public.",
         footer: "Created by <strong>PasleyStone</strong> for the <strong>Orizon</strong> community 🌌",
-        subFooter: "Optimized for Cobblemon v2.2+"
+        subFooter: "Optimized for Cobblemon v2.1+"
     }
 };
 
 function toggleLanguage() {
     currentLang = currentLang === 'es' ? 'en' : 'es';
     document.getElementById('langBtn').innerText = currentLang === 'es' ? 'EN' : 'ES';
-    
-    // Definimos 't' para que el código sepa de dónde sacar los textos
     const t = translations[currentLang];
-
-    // Actualizar textos estáticos
     document.querySelector('[data-t="subtitle"]').innerText = t.subtitle;
     document.querySelector('[data-t="btnGenerate"]').innerText = t.btnGenerate;
     document.querySelector('[data-t="btnClear"]').innerText = t.btnClear;
     document.querySelector('.main-footer p').innerHTML = t.footer;
-    document.querySelector('[data-t="subFooter"]').innerText = t.subFooter;
-    
-    // Actualizar el placeholder del cuadro de texto
     document.getElementById('input').placeholder = t.placeholder;
+    document.querySelector('[data-t="subFooter"]').innerText = t.subFooter;
 
-    // Si ya hay algo generado, lo volvemos a generar para traducir las etiquetas de los resultados
     if (document.getElementById('output').innerHTML !== '') {
         convertTeam();
     }
 }
 
-function convertTeam() {
-    const rawInput = document.getElementById('input').value.trim();
+async function convertTeam() {
+    let rawInput = document.getElementById('input').value.trim();
     const outputDiv = document.getElementById('output');
     const t = translations[currentLang];
     
     if (!rawInput) {
         outputDiv.innerHTML = `<div class="poke-card" style="border-left-color:var(--danger); text-align:center;"><p style="color:var(--text); font-weight:bold;">${t.emptyError}</p></div>`;
         return;
+    }
+
+    // --- DETECCIÓN DE LINK DE POKEPPASTE ---
+    if (rawInput.includes('pokepast.es/')) {
+        outputDiv.innerHTML = `<div class="poke-card" style="text-align:center;"><p style="color:var(--primary); font-weight:bold;">${t.loading}</p></div>`;
+        
+        try {
+            // Limpieza profunda del link
+            let cleanUrl = rawInput.split(' ')[0].split('\n')[0]; // Evitar texto extra
+            cleanUrl = cleanUrl.replace(/\/$/, ""); // Quitar barra final si existe
+            
+            if (!cleanUrl.endsWith('/raw')) cleanUrl += '/raw';
+            
+            // Nuevo Proxy: corsproxy.io (Suele ser más estable)
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`;
+            const response = await fetch(proxyUrl);
+            
+            if (!response.ok) throw new Error("Network response was not ok");
+            
+            rawInput = await response.text();
+            
+        } catch (error) {
+            outputDiv.innerHTML = `<div class="poke-card" style="border-left-color:var(--danger); text-align:center;"><p style="color:var(--text); font-weight:bold;">${t.linkError}</p></div>`;
+            return;
+        }
     }
 
     const blocks = rawInput.split(/\n\s*\n/);
@@ -123,7 +145,7 @@ function parsePokemon(block) {
 
             let lowSpec = data.species.toLowerCase();
 
-            // --- LÓGICA DE FORMAS ---
+            // --- LÓGICA DE FORMAS (Se mantiene igual para no romper nada) ---
             if (lowSpec === 'ursaluna-bloodmoon') { data.formParam += ' bloodmoon=true'; data.species = 'ursaluna'; }
             else if (lowSpec.startsWith('arceus-')) { data.formParam += ` multitype=${lowSpec.split('-')[1]}`; data.species = 'arceus'; }
             else if (lowSpec.startsWith('silvally-')) { data.formParam += ` rks_memory=${lowSpec.split('-')[1]}`; data.species = 'silvally'; }
